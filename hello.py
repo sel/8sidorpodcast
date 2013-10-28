@@ -51,4 +51,7 @@ def hello():
             # TODO: Convert the Swedish textual date in the title to a pubDate
             ET.SubElement(item, 'pubDate').text = formatdate()
 
-    return Response(ET.tostring(root), mimetype='application/rss+xml')
+    respbody = "<?xml version='1.0' encoding='utf-8'?>" + \
+        ET.tostring(root, 'utf-8')
+
+    return Response(respbody, mimetype='application/rss+xml')
