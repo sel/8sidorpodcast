@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 
 @app.route('/')
-def hello():
+def genfeed():
     '''
     Scrape 8sidor's audio page for .mp3 links and build an RSS feed.
     '''
@@ -24,8 +24,8 @@ def hello():
 
     channel = ET.SubElement(root, 'channel')
     ET.SubElement(channel, 'title').text = "8 SIDOR"
-    ET.SubElement(channel, 'description').text = "8 SIDOR"
     ET.SubElement(channel, 'link').text = AUDIO_WEB_URL
+    ET.SubElement(channel, 'description').text = "8 SIDOR"
     ET.SubElement(channel, 'pubDate').text = formatdate()
     ET.SubElement(channel, 'atom:link', {
         'rel': 'self',
@@ -42,16 +42,20 @@ def hello():
             else:
                 title = os.path.basename(urlparse(link).path)
 
+            link = urljoin(AUDIO_WEB_URL, link)
             item = ET.SubElement(channel, 'item')
             ET.SubElement(item, 'title').text = title
+            ET.SubElement(item, 'link').text = link
             ET.SubElement(item, 'description').text = title
-            ET.SubElement(item, 'link').text = urljoin(AUDIO_WEB_URL, link)
-            ET.SubElement(item, 'guid').text = urljoin(AUDIO_WEB_URL, link)
+            ET.SubElement(item, 'guid', {'isPermalink': 'false'}).text = link
+            ET.SubElement(item, 'enclosure', {
+                'url': link, 'type': 'audio/mpeg',
+                'length': '100000'})
 
             # TODO: Convert the Swedish textual date in the title to a pubDate
             ET.SubElement(item, 'pubDate').text = formatdate()
 
-    respbody = "<?xml version='1.0' encoding='utf-8'?>" + \
+    respbody = '<?xml version="1.0" encoding="UTF-8"?>' + \
         ET.tostring(root, 'utf-8')
 
     return Response(respbody, mimetype='application/rss+xml')
