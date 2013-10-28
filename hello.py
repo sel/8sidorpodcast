@@ -30,7 +30,7 @@ def hello():
     ET.SubElement(channel, 'atom:link', {
         'rel': 'self',
         'type': 'application/rss+xml',
-        'href': 'http://8sidorfeed.herokuapp.com'})
+        'href': 'http://shrouded-sierra-4334.herokuapp.com/'})
 
     url = AUDIO_WEB_URL
     soup = BeautifulSoup(urllib2.urlopen(url).read())
