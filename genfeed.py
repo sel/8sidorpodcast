@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding=utf-8
+
 import os
 import urllib2
 from flask import Flask, Response
@@ -28,7 +31,8 @@ def genfeed():
     channel = ET.SubElement(root, 'channel')
     ET.SubElement(channel, 'title').text = "8 SIDOR"
     ET.SubElement(channel, 'link').text = AUDIO_WEB_URL
-    ET.SubElement(channel, 'description').text = "8 SIDOR"
+    ET.SubElement(channel, 'description').text = \
+        u'Lyssna på dagens lättlästa nyheter'.encode('utf-8')
     ET.SubElement(channel, 'pubDate').text = \
         formatdate(time.mktime(pubDate.timetuple()), True)
     ET.SubElement(channel, 'atom:link', {
