@@ -5,7 +5,8 @@ from bs4 import BeautifulSoup
 from urlparse import urlparse, urljoin
 import xml.etree.ElementTree as ET
 from email.Utils import formatdate
-
+from datetime import datetime, timedelta
+import time
 
 app = Flask(__name__)
 
@@ -22,11 +23,14 @@ def genfeed():
         'version': '2.0',
         'xmlns:atom': 'http://www.w3.org/2005/Atom'})
 
+    pubDate = datetime.now()
+
     channel = ET.SubElement(root, 'channel')
     ET.SubElement(channel, 'title').text = "8 SIDOR"
     ET.SubElement(channel, 'link').text = AUDIO_WEB_URL
     ET.SubElement(channel, 'description').text = "8 SIDOR"
-    ET.SubElement(channel, 'pubDate').text = formatdate()
+    ET.SubElement(channel, 'pubDate').text = \
+        formatdate(time.mktime(pubDate.timetuple()), True)
     ET.SubElement(channel, 'atom:link', {
         'rel': 'self',
         'type': 'application/rss+xml',
@@ -53,7 +57,10 @@ def genfeed():
                 'length': '100000'})
 
             # TODO: Convert the Swedish textual date in the title to a pubDate
-            ET.SubElement(item, 'pubDate').text = formatdate()
+            ET.SubElement(item, 'pubDate').text = \
+                formatdate(time.mktime(pubDate.timetuple()), True)
+
+            pubDate = pubDate - timedelta(days=1)
 
     respbody = '<?xml version="1.0" encoding="UTF-8"?>' + \
         ET.tostring(root, 'utf-8')
