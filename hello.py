@@ -1,6 +1,6 @@
 import os
 import urllib2
-from flask import Flask
+from flask import Flask, Response
 from bs4 import BeautifulSoup
 from urlparse import urlparse, urljoin
 import xml.etree.ElementTree as ET
@@ -51,5 +51,4 @@ def hello():
             # TODO: Convert the Swedish textual date in the title to a pubDate
             ET.SubElement(item, 'pubDate').text = formatdate()
 
-    tree = ET.ElementTree(root)
-    return tree.tostring()
+    return Response(ET.tostring(root), mimetype='application/rss+xml')
