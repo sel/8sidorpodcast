@@ -38,7 +38,7 @@ def genfeed():
     ET.SubElement(channel, 'atom:link', {
         'rel': 'self',
         'type': 'application/rss+xml',
-        'href': 'http://shrouded-sierra-4334.herokuapp.com/'})
+        'href': 'http://pod8sidor.herokuapp.com/'})
 
     url = AUDIO_WEB_URL
     soup = BeautifulSoup(urllib2.urlopen(url).read())
