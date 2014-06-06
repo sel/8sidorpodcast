@@ -15,17 +15,18 @@ import locale
 AUDIO_WEB_URL = 'http://8sidor.se/start/lyssna-pa-lattlasta-nyheter'
 
 
-def genfeed():
+def genfeed(max_items):
     '''
     Scrape 8sidor's audio page for .mp3 links and build an RSS feed.
     '''
 
     url = AUDIO_WEB_URL
     page = urllib2.urlopen(url).read()
-    return create_feed(page, url)
+
+    return create_feed(page, url, max_items)
 
 
-def create_feed(page, url):
+def create_feed(page, url, max_items):
     soup = BeautifulSoup(page)
     pubDate = datetime.now()
 
@@ -34,8 +35,15 @@ def create_feed(page, url):
                 url, formatdate(time.mktime(pubDate.timetuple()), True),
                 'http://pod8sidor.herokuapp.com/')
 
-    locale.setlocale(locale.LC_ALL, 'sv_SE.UTF-8')
+    try:
+        locale.setlocale(locale.LC_ALL, 'sv_SE.utf8')   # Heroku
+    except:
+        try:
+            locale.setlocale(locale.LC_ALL, 'sv_SE.UTF-8')  # OS X
+        finally:
+            pass
 
+    item_count = 0
     for a in soup.find_all('a'):
         link = a.get('href')
 
@@ -61,6 +69,10 @@ def create_feed(page, url):
             item_pubdate = formatdate(time.mktime(pubDate.timetuple()), True)
 
         feed.add_item(title, description, link, item_pubdate)
+
+        item_count += 1
+        if max_items > 0 and item_count == max_items:
+            break
 
         pubDate = pubDate - timedelta(days=1)
 
