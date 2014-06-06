@@ -1,1 +1,1 @@
-web: gunicorn genfeed:app
+web: gunicorn webapp:app
