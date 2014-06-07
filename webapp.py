@@ -2,11 +2,16 @@
 # coding=utf-8
 
 from flask import Flask, Response, request
+from flask.ext.compress import Compress
 import attasidor
 
 
+TYPE_RSS = 'application/rss+xml'
+
 app = Flask(__name__)
 app.config['PROPAGATE_EXCEPTIONS'] = True
+app.config['COMPRESS_MIMETYPES'] = TYPE_RSS
+Compress(app)
 
 
 @app.route('/')
@@ -20,7 +25,7 @@ def webroot():
     except:
         max_items = 0
 
-    return Response(attasidor.genfeed(max_items), mimetype='application/rss+xml')
+    return Response(attasidor.genfeed(max_items), mimetype=TYPE_RSS)
 
 # if __name__ == '__main__':
 #    app.run(debug=True)
