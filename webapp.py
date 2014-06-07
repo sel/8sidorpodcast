@@ -3,7 +3,7 @@
 
 from flask import Flask, Response, request
 from flask.ext.compress import Compress
-import attasidor
+import aattasidor
 
 
 TYPE_RSS = 'application/rss+xml'
@@ -25,6 +25,6 @@ def webroot():
     except:
         max_items = 0
 
-    feed = attasidor.genfeed(max_items, request.url)
+    feed = aattasidor.genfeed(max_items, request.url)
 
     return Response(feed, mimetype=TYPE_RSS)
