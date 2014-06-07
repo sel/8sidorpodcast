@@ -12,11 +12,22 @@ import time
 import locale
 
 
+# URL of the page containing the daily audio news
 AUDIO_PAGE_URL = 'http://8sidor.se/start/lyssna-pa-lattlasta-nyheter'
+
+# 8sidor logo
+IMAGE_URL = 'https://pbs.twimg.com/profile_images/2524416759/' + \
+    'qwmgsccjyswvznn1tfb5_400x400.jpeg'
+
+# Default title and description used in the case that they cannot be determined
+# from the HTML page.
 DEFAULT_TITLE = u'8 SIDOR'
 DEFAULT_DESCR = u'Lyssna på dagens lättlästa nyheter'
-IMAGE_URL = 'https://pbs.twimg.com/profile_images/2524416759/' + \
-                'qwmgsccjyswvznn1tfb5_400x400.jpeg'
+
+# Set an average file size for the enclosure length used in the feed, since the
+# file length is not available in the HTML page and it would take too long to
+# work out the correct size of all linked media files.
+DEFAULT_AUDIO_SIZE = '2621440'  # 2.5MB
 
 
 def genfeed(max_items, self_url):
@@ -32,7 +43,7 @@ def genfeed(max_items, self_url):
 
 def create_feed(page, page_date, url, max_items, self_url):
     # Set the locale to Swedish, so that textual dates can be parsed with
-    # datetime.strptime.  For some reason the locale names are different between
+    # datetime.strptime.  For some reason the locale names are different in
     # Heroku and OS X.
     try:
         locale.setlocale(locale.LC_ALL, 'sv_SE.utf8')   # Heroku
@@ -50,8 +61,8 @@ def create_feed(page, page_date, url, max_items, self_url):
         title = DEFAULT_TITLE
 
     try:
-        description = soup.head.meta.find(attrs={"name":"description"}) \
-                .get('content')
+        description = soup.head.meta.find(attrs={"name": "description"}) \
+            .get('content')
     except:
         description = DEFAULT_DESCR
 
@@ -87,7 +98,7 @@ def create_feed(page, page_date, url, max_items, self_url):
         try:
             # Try to convert the Swedish textual date in the title to a pubDate
             item_datetime = datetime.strptime(title, '%Aen den %d %B') \
-                    .replace(year=item_date_guess.year, hour=8)
+                .replace(year=item_date_guess.year, hour=8)
         except ValueError as e:
             # Otherwise, try to take the date from the filename instead
             try:
@@ -112,7 +123,7 @@ def create_feed(page, page_date, url, max_items, self_url):
 class Feed():
 
     def __init__(self, title, description, link, pub_date, last_build_date,
-            self_link):
+                 self_link):
 
         self._root = ET.Element('rss', {
             'version': '2.0',
@@ -143,8 +154,8 @@ class Feed():
         ET.SubElement(item, 'guid', {'isPermalink': 'false'}).text = link
         ET.SubElement(item, 'enclosure', {
             'url': link, 'type': 'audio/mpeg',
-            'length': '100000'})
+            'length': DEFAULT_AUDIO_SIZE})
 
     def to_string(self):
         return '<?xml version="1.0" encoding="UTF-8"?>' + \
-                ET.tostring(self._root, 'utf-8')
+            ET.tostring(self._root, 'utf-8')
