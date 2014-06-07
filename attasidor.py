@@ -25,11 +25,12 @@ def genfeed(max_items, self_url):
     '''
 
     url = AUDIO_PAGE_URL
-    page = urllib2.urlopen(url).read()
-    return create_feed(page, url, max_items, self_url)
+    resp = urllib2.urlopen(url)
+    page_date = resp.info().getheader('Date')
+    return create_feed(resp.read(), page_date, url, max_items, self_url)
 
 
-def create_feed(page, url, max_items, self_url):
+def create_feed(page, page_date, url, max_items, self_url):
     # Set the locale to Swedish, so that textual dates can be parsed with
     # datetime.strptime.  For some reason the locale names are different between
     # Heroku and OS X.
@@ -54,9 +55,10 @@ def create_feed(page, url, max_items, self_url):
     except:
         description = DEFAULT_DESCR
 
-    pub_date = formatdate(time.mktime(datetime.now().timetuple()), True)
+    last_build_date = formatdate(time.mktime(datetime.now().timetuple()), True)
+    pub_date = page_date or last_build_date
 
-    feed = Feed(title, description, url, pub_date, self_url)
+    feed = Feed(title, description, url, pub_date, last_build_date, self_url)
 
     # A guestimate for the item's pubDate, used in cases where the date cannot
     # be determined from either the item title or filename.  This guess is
@@ -109,7 +111,9 @@ def create_feed(page, url, max_items, self_url):
 
 class Feed():
 
-    def __init__(self, title, description, link, pubdate, self_link):
+    def __init__(self, title, description, link, pub_date, last_build_date,
+            self_link):
+
         self._root = ET.Element('rss', {
             'version': '2.0',
             'xmlns:atom': 'http://www.w3.org/2005/Atom'})
@@ -118,7 +122,8 @@ class Feed():
         ET.SubElement(self._channel, 'title').text = title
         ET.SubElement(self._channel, 'description').text = description
         ET.SubElement(self._channel, 'link').text = link
-        ET.SubElement(self._channel, 'pubDate').text = pubdate
+        ET.SubElement(self._channel, 'pubDate').text = pub_date
+        ET.SubElement(self._channel, 'lastBuildDate').text = last_build_date
         ET.SubElement(self._channel, 'atom:link', {
             'rel': 'self',
             'type': 'application/rss+xml',
