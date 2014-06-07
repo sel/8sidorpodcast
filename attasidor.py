@@ -22,7 +22,6 @@ def genfeed(max_items):
 
     url = AUDIO_WEB_URL
     page = urllib2.urlopen(url).read()
-
     return create_feed(page, url, max_items)
 
 

@@ -2,7 +2,7 @@
 # coding=utf-8
 
 from flask import Flask, Response, request
-import ottasidor
+import attasidor
 
 
 app = Flask(__name__)
@@ -20,7 +20,7 @@ def webroot():
     except:
         max_items = 0
 
-    return Response(ottasidor.genfeed(max_items), mimetype='application/rss+xml')
+    return Response(attasidor.genfeed(max_items), mimetype='application/rss+xml')
 
 # if __name__ == '__main__':
 #    app.run(debug=True)
