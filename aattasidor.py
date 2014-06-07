@@ -26,8 +26,14 @@ DEFAULT_DESCR = u'Lyssna på dagens lättlästa nyheter'
 
 # Set an average file size for the enclosure length used in the feed, since the
 # file length is not available in the HTML page and it would take too long to
-# work out the correct size of all linked media files.
+# work out the correct size of all linked media files by sending an HTTP HEAD
+# request for each one.
 DEFAULT_AUDIO_SIZE = '2621440'  # 2.5MB
+
+# Set a default item publication time.  Again, we don't have this information
+# in the HTML page and to be accurate would involve sending additional HTTP
+# requests - one per item - thereby breaking responsiveness.
+DEFAULT_ITEM_PUB_HOUR = 8
 
 
 def genfeed(max_items, self_url):
@@ -98,7 +104,7 @@ def create_feed(page, page_date, url, max_items, self_url):
         try:
             # Try to convert the Swedish textual date in the title to a pubDate
             item_datetime = datetime.strptime(title, '%Aen den %d %B') \
-                .replace(year=item_date_guess.year, hour=8)
+                .replace(year=item_date_guess.year)
         except ValueError as e:
             # Otherwise, try to take the date from the filename instead
             try:
@@ -107,6 +113,10 @@ def create_feed(page, page_date, url, max_items, self_url):
                 # Finally, fall back to our guesstimate
                 item_datetime = item_date_guess
 
+        # Set a more suitable time, instead of 12am.
+        item_datetime = item_datetime.replace(hour=DEFAULT_ITEM_PUB_HOUR)
+
+        # Convert to an RFC822 formatted string
         item_pubDate = formatdate(time.mktime(item_datetime.timetuple()), True)
 
         feed.add_item(title, description, link, item_pubDate)
