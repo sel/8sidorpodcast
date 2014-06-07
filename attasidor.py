@@ -13,6 +13,7 @@ import locale
 
 
 AUDIO_WEB_URL = 'http://8sidor.se/start/lyssna-pa-lattlasta-nyheter'
+IMAGE_URL = 'https://pbs.twimg.com/profile_images/2524416759/qwmgsccjyswvznn1tfb5_400x400.jpeg'
 
 
 def genfeed(max_items):
@@ -94,6 +95,11 @@ class Feed():
             'rel': 'self',
             'type': 'application/rss+xml',
             'href': self_link})
+
+        image = ET.SubElement(self._channel, 'image')
+        ET.SubElement(image, 'url').text = IMAGE_URL
+        ET.SubElement(image, 'title').text = title
+        ET.SubElement(image, 'link').text = link
 
     def add_item(self, title, description, link, pubdate):
         item = ET.SubElement(self._channel, 'item')
