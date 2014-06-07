@@ -25,7 +25,6 @@ def webroot():
     except:
         max_items = 0
 
-    return Response(attasidor.genfeed(max_items), mimetype=TYPE_RSS)
+    feed = attasidor.genfeed(max_items, request.url)
 
-# if __name__ == '__main__':
-#    app.run(debug=True)
+    return Response(feed, mimetype=TYPE_RSS)

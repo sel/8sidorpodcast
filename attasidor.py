@@ -12,30 +12,27 @@ import time
 import locale
 
 
-AUDIO_WEB_URL = 'http://8sidor.se/start/lyssna-pa-lattlasta-nyheter'
-IMAGE_URL = 'https://pbs.twimg.com/profile_images/2524416759/qwmgsccjyswvznn1tfb5_400x400.jpeg'
+AUDIO_PAGE_URL = 'http://8sidor.se/start/lyssna-pa-lattlasta-nyheter'
+DEFAULT_TITLE = u'8 SIDOR'
+DEFAULT_DESCR = u'Lyssna på dagens lättlästa nyheter'
+IMAGE_URL = 'https://pbs.twimg.com/profile_images/2524416759/' + \
+                'qwmgsccjyswvznn1tfb5_400x400.jpeg'
 
 
-def genfeed(max_items):
+def genfeed(max_items, self_url):
     '''
     Scrape 8sidor's audio page for .mp3 links and build an RSS feed.
     '''
 
-    url = AUDIO_WEB_URL
+    url = AUDIO_PAGE_URL
     page = urllib2.urlopen(url).read()
-    return create_feed(page, url, max_items)
+    return create_feed(page, url, max_items, self_url)
 
 
-def create_feed(page, url, max_items):
-    soup = BeautifulSoup(page)
-
-    feed = Feed('8 SIDOR',
-                u'Lyssna på dagens lättlästa nyheter',
-                url, formatdate(time.mktime(datetime.now().timetuple()), True),
-                'http://pod8sidor.herokuapp.com/')
-
+def create_feed(page, url, max_items, self_url):
     # Set the locale to Swedish, so that textual dates can be parsed with
-    # time.strptime.
+    # datetime.strptime.  For some reason the locale names are different between
+    # Heroku and OS X.
     try:
         locale.setlocale(locale.LC_ALL, 'sv_SE.utf8')   # Heroku
     except:
@@ -43,6 +40,23 @@ def create_feed(page, url, max_items):
             locale.setlocale(locale.LC_ALL, 'sv_SE.UTF-8')  # OS X
         finally:
             pass
+
+    soup = BeautifulSoup(page)
+
+    try:
+        title = soup.title.string.strip()
+    except:
+        title = DEFAULT_TITLE
+
+    try:
+        description = soup.head.meta.find(attrs={"name":"description"}) \
+                .get('content')
+    except:
+        description = DEFAULT_DESCR
+
+    pub_date = formatdate(time.mktime(datetime.now().timetuple()), True)
+
+    feed = Feed(title, description, url, pub_date, self_url)
 
     # A guestimate for the item's pubDate, used in cases where the date cannot
     # be determined from either the item title or filename.  This guess is
