@@ -28,13 +28,14 @@ def genfeed(max_items):
 
 def create_feed(page, url, max_items):
     soup = BeautifulSoup(page)
-    pubDate = datetime.now()
 
     feed = Feed('8 SIDOR',
                 u'Lyssna på dagens lättlästa nyheter',
-                url, formatdate(time.mktime(pubDate.timetuple()), True),
+                url, formatdate(time.mktime(datetime.now().timetuple()), True),
                 'http://pod8sidor.herokuapp.com/')
 
+    # Set the locale to Swedish, so that textual dates can be parsed with
+    # time.strptime.
     try:
         locale.setlocale(locale.LC_ALL, 'sv_SE.utf8')   # Heroku
     except:
@@ -43,6 +44,11 @@ def create_feed(page, url, max_items):
         finally:
             pass
 
+    # A guestimate for the item's pubDate, used in cases where the date cannot
+    # be determined from either the item title or filename.  This guess is
+    # updated continuously below based on the previous item's pubDate.
+    item_date_guess = datetime.now()
+
     item_count = 0
     for a in soup.find_all('a'):
         link = a.get('href')
@@ -50,31 +56,39 @@ def create_feed(page, url, max_items):
         if link is None or not link.endswith('.mp3'):
             continue
 
+        filename = os.path.basename(urlparse(link).path)
+
         if a.string:
             title = ' '.join(a.string.splitlines()).strip()
         else:
-            title = os.path.basename(urlparse(link).path)
+            title = filename
 
         description = title
 
         link = urljoin(url, link)
 
-        # Try to convert the Swedish textual date in the title to a pubDate
+        # Determine the item's pubDate
         try:
-            dt = datetime.strptime(title, '%Aen den %d %B')
-            dt = dt.replace(year=pubDate.year, hour=8)
-            item_pubdate = formatdate(time.mktime(dt.timetuple()), True)
+            # Try to convert the Swedish textual date in the title to a pubDate
+            item_datetime = datetime.strptime(title, '%Aen den %d %B') \
+                    .replace(year=item_date_guess.year, hour=8)
         except ValueError as e:
-            print e
-            item_pubdate = formatdate(time.mktime(pubDate.timetuple()), True)
+            # Otherwise, try to take the date from the filename instead
+            try:
+                item_datetime = datetime.strptime(filename, '%y%m%d.mp3')
+            except:
+                # Finally, fall back to our guesstimate
+                item_datetime = item_date_guess
 
-        feed.add_item(title, description, link, item_pubdate)
+        item_pubDate = formatdate(time.mktime(item_datetime.timetuple()), True)
+
+        feed.add_item(title, description, link, item_pubDate)
 
         item_count += 1
         if max_items > 0 and item_count == max_items:
             break
 
-        pubDate = pubDate - timedelta(days=1)
+        item_date_guess = item_datetime - timedelta(days=1)
 
     return feed.to_string()
 
@@ -114,4 +128,4 @@ class Feed():
 
     def to_string(self):
         return '<?xml version="1.0" encoding="UTF-8"?>' + \
-            ET.tostring(self._root, 'utf-8')
+                ET.tostring(self._root, 'utf-8')
